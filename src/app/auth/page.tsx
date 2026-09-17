@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { AuthForm } from "@/components/auth/auth-form";
+import { Spinner } from "@/components/site/primitives";
 
 export const metadata: Metadata = { title: "ورود" };
 
@@ -12,7 +14,9 @@ export default function AuthPage() {
           <h1 className="mt-4 text-xl font-bold">پورتال دانش‌آموزی و اولیا</h1>
           <p className="mt-2 text-sm text-muted-foreground">دبیرستان دخترانه شاهد حضرت خدیجه (ص)</p>
         </div>
-        <AuthForm />
+        <Suspense fallback={<Spinner />}>
+          <AuthForm />
+        </Suspense>
       </div>
     </main>
   );

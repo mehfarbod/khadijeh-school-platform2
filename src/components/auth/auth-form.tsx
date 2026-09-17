@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useConvexAuth } from "convex/react";
@@ -30,9 +30,11 @@ export function AuthForm() {
 
   const safeReturn = returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/portal";
 
-  if (!authLoading && isAuthenticated) {
-    router.replace(safeReturn);
-  }
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.replace(safeReturn);
+    }
+  }, [authLoading, isAuthenticated, router, safeReturn]);
 
   async function sendCode(e: React.FormEvent) {
     e.preventDefault();
