@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { api } from "@/convex/_generated/api";
-import { getConvexServerClient } from "@/lib/server-convex";
+import { listFaq } from "@/lib/queries";
 import { PageHeader, EmptyState } from "@/components/site/primitives";
 import { FaqList } from "@/components/site/faq-list";
 
@@ -8,7 +7,7 @@ export const metadata: Metadata = { title: "پرسش‌های پرتکرار" };
 export const dynamic = "force-dynamic";
 
 export default async function FaqPage() {
-  const faq = await getConvexServerClient().query(api.public2.listFaq, {});
+  const faq = await listFaq();
 
   return (
     <>

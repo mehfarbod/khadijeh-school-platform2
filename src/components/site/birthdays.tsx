@@ -2,12 +2,12 @@ import { Cake } from "lucide-react";
 import { toFa } from "@/lib/format";
 
 type Birthday = {
-  _id: string;
+  id: string;
   person: string;
-  kind?: string;
+  kind?: string | null;
   month: number;
   day: number;
-  grade?: string;
+  grade?: string | null;
 };
 
 const MONTHS = [
@@ -26,7 +26,7 @@ export function Birthdays({ items }: { items: Birthday[] }) {
         </div>
         <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-soft">
           {items.map((b) => (
-            <li key={b._id} className="flex items-center gap-1.5">
+            <li key={b.id} className="flex items-center gap-1.5">
               <span className="font-medium text-foreground">{b.person}</span>
               <span aria-hidden>·</span>
               <span>

@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { api } from "@/convex/_generated/api";
-import { getConvexServerClient } from "@/lib/server-convex";
+import { listStaff } from "@/lib/queries";
 import { PageHeader, EmptyState } from "@/components/site/primitives";
 
 export const metadata: Metadata = { title: "کادر آموزشی" };
 export const dynamic = "force-dynamic";
 
 export default async function TeachersPage() {
-  const staff = await getConvexServerClient().query(api.public2.listStaff, {});
+  const staff = await listStaff();
 
   return (
     <>
@@ -18,7 +17,7 @@ export default async function TeachersPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {staff.map((s) => (
-              <article key={s._id} className="card-quiet p-6">
+              <article key={s.id} className="card-quiet p-6">
                 <div className="flex items-center gap-3">
                   <span className="flex size-11 items-center justify-center rounded-full bg-cream text-sm font-bold text-ink-soft">
                     {s.fullName.trim().charAt(0)}

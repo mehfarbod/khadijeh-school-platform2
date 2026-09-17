@@ -1,12 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useAuth } from "@/hooks/use-auth";
-import { BookOpen, CalendarX, LogOut, UserRound } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Spinner, EmptyState } from "@/components/site/primitives";
+import { BookOpen, CalendarX, UserRound } from "lucide-react";
+import { db } from "@/lib/db";
+import { requirePortalUser } from "@/lib/auth";
+import { myCoursesSafe, myExamsSafe } from "@/lib/portal-data";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { EmptyState } from "@/components/site/primitives";
 
 const REG_STATUS: Record<string, string> = {
   pending: "در انتظار تأیید",
@@ -15,12 +13,10 @@ const REG_STATUS: Record<string, string> = {
   cancelled: "لغو شده",
 };
 
-export default function PortalPage() {
-  const { user, student, signOut, isLoading } = useAuth();
-  const myCourses = useQuery(api.portal.myCourses, {});
-  const myExams = useQuery(api.portal.myExams, {});
-
-  if (isLoading) return <Spinner />;
+export default async function PortalPage() {
+  const user = await requirePortalUser();
+  const student = await db.student.findUnique({ where: { userId: user.id } });
+  const [courses, exams] = await Promise.all([myCoursesSafe(user.id), myExamsSafe(user.id)]);
 
   return (
     <div className="container-page max-w-5xl py-10">
@@ -28,7 +24,7 @@ export default function PortalPage() {
         <div>
           <p className="text-sm text-muted-foreground">پورتال دانش‌آموزی و اولیا</p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight">
-            {student?.fullName ?? user?.name ?? "خوش آمدید"}
+            {student?.fullName ?? user.name ?? "خوش آمدید"}
           </h1>
           {student ? (
             <p className="mt-1 text-sm text-muted-foreground">
@@ -36,25 +32,23 @@ export default function PortalPage() {
             </p>
           ) : null}
         </div>
-        <Button variant="outline" onClick={() => signOut()}>
-          <LogOut className="size-4" aria-hidden /> خروج از حساب
-        </Button>
+        <SignOutButton className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm hover:bg-muted" label="خروج از حساب" />
       </header>
 
       <section className="mt-10">
         <h2 className="flex items-center gap-2 text-lg font-bold">
           <BookOpen className="size-5 text-rose-deep" aria-hidden /> دوره‌های من
         </h2>
-        {myCourses === undefined ? <Spinner /> : myCourses.length === 0 ? (
+        {courses.length === 0 ? (
           <div className="mt-4"><EmptyState title="در دوره‌ای ثبت‌نام نکرده‌اید" hint="از صفحه دوره‌ها می‌توانید ثبت‌نام کنید." /></div>
         ) : (
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {myCourses.map(({ reg, course }) => (
-              <li key={reg._id} className="card-quiet p-5">
+            {courses.map(({ reg, course }) => (
+              <li key={reg.id} className="card-quiet p-5">
                 <div className="flex items-center justify-between gap-2">
                   <Link href={`/courses/${course.slug}`} className="font-semibold hover:text-ink-soft">{course.title}</Link>
                   <span className="rounded-full bg-rose-tint px-2.5 py-0.5 text-xs font-medium text-rose-deep">
-                    {REG_STATUS[reg.status ?? "pending"]}
+                    {REG_STATUS[reg.status] ?? reg.status}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground">
@@ -70,12 +64,12 @@ export default function PortalPage() {
         <h2 className="flex items-center gap-2 text-lg font-bold">
           <CalendarX className="size-5 text-rose-deep" aria-hidden /> امتحانات پیشِ رو
         </h2>
-        {myExams === undefined ? <Spinner /> : myExams.length === 0 ? (
+        {exams.length === 0 ? (
           <div className="mt-4"><EmptyState title="امتحانی برای پایه شما ثبت نشده است" /></div>
         ) : (
           <ul className="mt-4 space-y-3">
-            {myExams.map((e) => (
-              <li key={e._id} className="card-quiet flex flex-wrap items-center justify-between gap-2 p-4">
+            {exams.map((e) => (
+              <li key={e.id} className="card-quiet flex flex-wrap items-center justify-between gap-2 p-4">
                 <div>
                   <p className="font-medium">{e.subject} — {e.title}</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">

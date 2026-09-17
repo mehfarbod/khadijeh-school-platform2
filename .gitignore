@@ -1,3 +1,4 @@
+.env
 .env.local
 node_modules
 dist
@@ -5,7 +6,5 @@ dist
 out
 *.tsbuildinfo
 
-# NOTE: src/convex/_generated is intentionally NOT ignored.
-# It must be committed so that "@/convex/_generated/api" resolves on hosts
-# that build without running Convex codegen (e.g. Vercel). `convex codegen`
-# also regenerates it during `build`, keeping it in sync.
+# Local uploads (never commit user files)
+public/uploads

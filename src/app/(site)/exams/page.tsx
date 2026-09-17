@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { api } from "@/convex/_generated/api";
-import { getConvexServerClient } from "@/lib/server-convex";
+import { listExams } from "@/lib/queries";
 import { PageHeader, EmptyState } from "@/components/site/primitives";
 
 export const metadata: Metadata = { title: "امتحانات" };
 export const dynamic = "force-dynamic";
 
 export default async function ExamsPage() {
-  const exams = await getConvexServerClient().query(api.public2.listExams, {});
+  const exams = await listExams();
 
   return (
     <>
@@ -29,7 +28,7 @@ export default async function ExamsPage() {
               </thead>
               <tbody>
                 {exams.map((e, i) => (
-                  <tr key={e._id} className={i % 2 ? "bg-muted/40" : ""}>
+                  <tr key={e.id} className={i % 2 ? "bg-muted/40" : ""}>
                     <td className="px-5 py-3.5 font-medium">{e.subject}</td>
                     <td className="px-5 py-3.5">{e.grade}</td>
                     <td className="px-5 py-3.5">{e.date}</td>

@@ -1,0 +1,306 @@
+// Shahid Hazrat Khadijeh Girls' High School — PostgreSQL schema (Prisma)
+// Migrated from the former Convex schema (src/convex/school.ts / schoolExtra.ts)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth & users
+// ---------------------------------------------------------------------------
+
+enum Role {
+  SUPER_ADMIN
+  SCHOOL_ADMIN
+  CONTENT_MANAGER
+  STUDENT
+  PARENT
+  STAFF
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  image        String?
+  passwordHash String
+  role         Role      @default(STUDENT)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions         Session[]
+  student          Student?
+  registrations    CourseRegistration[]
+  contactMessages  ContactMessage[]
+
+  @@index([role])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// People
+// ---------------------------------------------------------------------------
+
+model Student {
+  id           String    @id @default(cuid())
+  fullName     String
+  grade        String
+  className    String
+  fatherName   String?
+  guardianPhone String?
+  userId       String?   @unique
+  user         User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  photoUrl     String?
+  status       String    @default("active")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([grade])
+}
+
+model Staff {
+  id        String   @id @default(cuid())
+  fullName  String
+  role      String
+  subject   String?
+  bio       String?
+  photoUrl  String?
+  email     String?
+  phone     String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Courses & registration
+// ---------------------------------------------------------------------------
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String
+  instructor  String?
+  category    String
+  duration    String?
+  capacity    Int?
+  schedule    String?
+  status      String   @default("open") // open | closed | full
+  fee         Int?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  registrations CourseRegistration[]
+
+  @@index([category])
+  @@index([status])
+}
+
+model CourseRegistration {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  fullName  String
+  phone     String
+  grade     String?
+  note      String?
+  status    String   @default("pending") // pending | approved | rejected | cancelled
+  // Payment fields reserved for a future Iranian payment gateway integration
+  paymentStatus String @default("unpaid") // unpaid | pending | paid
+  paymentRef    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([courseId, userId])
+  @@index([courseId])
+  @@index([userId])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Content
+// ---------------------------------------------------------------------------
+
+model News {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  summary   String?
+  body      String
+  date      String?
+  pinned    Boolean  @default(false)
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pinned])
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  summary   String?
+  body      String
+  date      String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  date        String?
+  time        String?
+  location    String?
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  date      String?
+  important Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  title       String
+  level       String   @default("student") // school | student
+  person      String?
+  year        String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([level])
+}
+
+model TopStudent {
+  id          String   @id @default(cuid())
+  fullName    String
+  grade       String
+  className   String?
+  achievement String
+  photoUrl    String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Birthday {
+  id      String @id @default(cuid())
+  person  String
+  kind    String @default("student") // student | staff
+  month   Int
+  day     Int
+  grade   String?
+
+  @@index([month])
+}
+
+model GalleryAlbum {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  coverUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  images GalleryImage[]
+}
+
+model GalleryImage {
+  id      String @id @default(cuid())
+  albumId String
+  album   GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  title   String?
+  url     String
+
+  @@index([albumId])
+}
+
+model ScheduleEntry {
+  id        String @id @default(cuid())
+  day       String
+  time      String
+  subject   String
+  teacher   String?
+  grade     String
+  className String
+
+  @@index([day])
+  @@index([grade])
+}
+
+model Exam {
+  id        String   @id @default(cuid())
+  title     String
+  subject   String
+  grade     String
+  date      String
+  time      String?
+  location  String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([grade])
+}
+
+model FaqItem {
+  id       String @id @default(cuid())
+  question String
+  answer   String
+  order    Int    @default(0)
+}
+
+// ---------------------------------------------------------------------------
+// Messages & settings
+// ---------------------------------------------------------------------------
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  subject   String
+  message   String
+  read      Boolean  @default(false)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  @@index([read])
+}
+
+model SchoolSetting {
+  key   String @id
+  value String
+}

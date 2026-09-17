@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,25 +16,45 @@ const FIELDS = [
 ];
 
 export default function AdminSettingsPage() {
-  const settings = useQuery(api.public.getSettings, {});
-  const setSetting = useMutation(api.adminSettings.setSetting);
+  const [settings, setSettings] = useState<Record<string, string> | undefined>(undefined);
   const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/admin/settings");
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error ?? "خطا");
+        if (!cancelled) {
+          setSettings(json.settings);
+          setValues(json.settings ?? {});
+        }
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "خطا در دریافت تنظیمات");
+        if (!cancelled) setSettings({});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (settings === undefined) return <Spinner />;
-
-  if (!hydrated && Object.keys(values).length === 0 && Object.keys(settings).length > 0) {
-    setValues({ ...settings });
-    setHydrated(true);
-  }
 
   async function onSave() {
     setSaving(true);
     try {
       for (const f of FIELDS) {
         if (values[f.key] !== undefined && values[f.key] !== settings?.[f.key]) {
-          await setSetting({ key: f.key, value: values[f.key] });
+          const res = await fetch("/api/admin/settings", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ key: f.key, value: values[f.key] }),
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.error ?? "ذخیره ناموفق بود");
         }
       }
       toast.success("تنظیمات ذخیره شد");

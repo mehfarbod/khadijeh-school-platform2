@@ -1,5 +1,4 @@
-import { api } from "@/convex/_generated/api";
-import { getConvexServerClient } from "@/lib/server-convex";
+import { listTopStudents, listBirthdays, listNews, listReports, listEvents, listAchievements, listStaff, listAlbumsWithImages, listExams, listFaq } from "@/lib/queries";
 import { HomeHero } from "@/components/site/home-hero";
 import { QuickAccess } from "@/components/site/quick-access";
 import { TopStudents } from "@/components/site/top-students";
@@ -12,27 +11,19 @@ import { SectionHeading } from "@/components/site/primitives";
 
 export const dynamic = "force-dynamic";
 
-type TopStudent = { _id: string; fullName: string; grade: string; className?: string; achievement: string; photoUrl?: string };
-type Achievement = { _id: string; title: string; level?: string; person?: string; year?: string; description?: string };
-type Staff = { _id: string; fullName: string; role: string; subject?: string };
-type Album = { _id: string; title: string; description?: string };
-type Exam = { _id: string; title: string; subject: string; grade: string; date: string; time?: string };
-type Faq = { _id: string; question: string; answer: string };
-
 export default async function HomePage() {
-  const c = getConvexServerClient();
   const [tops, bdays, news, reports, events, achievements, staff, albums, exams, faq] =
     await Promise.all([
-      c.query(api.public.listTopStudents, { limit: 6 }),
-      c.query(api.public.listBirthdays, { limit: 8 }),
-      c.query(api.public.listNews, { limit: 3 }),
-      c.query(api.public.listReports, { limit: 3 }),
-      c.query(api.public.listEvents, { limit: 3 }),
-      c.query(api.public.listAchievements, { limit: 4 }),
-      c.query(api.public2.listStaff, {}),
-      c.query(api.public2.listAlbums, {}),
-      c.query(api.public2.listExams, {}),
-      c.query(api.public2.listFaq, {}),
+      listTopStudents(6),
+      listBirthdays(8),
+      listNews(3),
+      listReports(3),
+      listEvents(3),
+      listAchievements(4),
+      listStaff(),
+      listAlbumsWithImages(),
+      listExams(),
+      listFaq(),
     ]);
 
   return (
@@ -45,7 +36,7 @@ export default async function HomePage() {
         title="گزارش‌های مدرسه"
         subtitle="شرح عملکردها و فعالیت‌های اخیر مدرسه."
         href="/reports"
-        items={reports.map((r) => ({ id: r._id, title: r.title, meta: r.date, desc: excerpt(r.summary), href: `/reports/${r.slug}` }))}
+        items={reports.map((r) => ({ id: r.id, title: r.title, meta: r.date, desc: excerpt(r.summary), href: `/reports/${r.slug}` }))}
         renderItem={(i) => <QuietCard item={i} />}
       />
       <PreviewSection
@@ -53,14 +44,14 @@ export default async function HomePage() {
         title="رویدادهای پیشِ رو"
         subtitle="تقویم برنامه‌ها و مراسم‌های مدرسه."
         href="/events"
-        items={events.map((e) => ({ id: e._id, title: e.title, meta: [e.date, e.time, e.location].filter(Boolean).join(" · "), desc: excerpt(e.description) }))}
+        items={events.map((e) => ({ id: e.id, title: e.title, meta: [e.date, e.time, e.location].filter(Boolean).join(" · "), desc: excerpt(e.description) }))}
         renderItem={(i) => <QuietCard item={i} />}
       />
       <PreviewSection
         title="آخرین اخبار"
         subtitle="رویدادها و اطلاعیه‌های تازه مدرسه."
         href="/news"
-        items={news.map((n) => ({ id: n._id, title: n.title, meta: n.date, desc: excerpt(n.summary), href: `/news/${n.slug}` }))}
+        items={news.map((n) => ({ id: n.id, title: n.title, meta: n.date, desc: excerpt(n.summary), href: `/news/${n.slug}` }))}
         renderItem={(i) => <QuietCard item={i} />}
       />
       <HomeTail achievements={achievements} staff={staff} albums={albums} exams={exams} faq={faq} />
@@ -68,12 +59,23 @@ export default async function HomePage() {
   );
 }
 
+import type { Achievement, Staff, GalleryAlbum, Exam, FaqItem } from "@prisma/client";
+
+type Album = Pick<GalleryAlbum, "id" | "title" | "description">;
+
+// Keep type identity simple: nullable Prisma fields flow straight through.
+export type HomeAchievement = Achievement;
+export type HomeStaff = Staff;
+export type HomeAlbum = Album;
+export type HomeExam = Exam;
+export type HomeFaq = FaqItem;
+
 function HomeTail({ achievements, staff, albums, exams, faq }: {
   achievements: Achievement[];
   staff: Staff[];
   albums: Album[];
   exams: Exam[];
-  faq: Faq[];
+  faq: FaqItem[];
 }) {
   return (
     <>
@@ -82,14 +84,14 @@ function HomeTail({ achievements, staff, albums, exams, faq }: {
         title="افتخارات"
         subtitle="موفقیت‌های دانش‌آموزان و مدرسه."
         href="/achievements"
-        items={achievements.map((a) => ({ id: a._id, title: a.title, meta: [a.person, a.year].filter(Boolean).join(" · "), desc: excerpt(a.description) }))}
+        items={achievements.map((a) => ({ id: a.id, title: a.title, meta: [a.person, a.year].filter(Boolean).join(" · "), desc: excerpt(a.description) }))}
         renderItem={(i) => <QuietCard item={i} />}
       />
       <PreviewSection
         title="کادر آموزشی"
         subtitle="دبیران و مربیان دبیرستان."
         href="/teachers"
-        items={staff.slice(0, 3).map((s) => ({ id: s._id, title: s.fullName, meta: s.subject, desc: s.role }))}
+        items={staff.slice(0, 3).map((s) => ({ id: s.id, title: s.fullName, meta: s.subject, desc: s.role }))}
         renderItem={(i) => <QuietCard item={i} />}
       />
       <PreviewSection
@@ -97,14 +99,14 @@ function HomeTail({ achievements, staff, albums, exams, faq }: {
         title="گالری تصاویر"
         subtitle="آلبوم‌های تصویری مدرسه."
         href="/gallery"
-        items={albums.slice(0, 3).map((a) => ({ id: a._id, title: a.title, desc: a.description }))}
+        items={albums.slice(0, 3).map((a) => ({ id: a.id, title: a.title, desc: a.description }))}
         renderItem={(i) => <QuietCard item={i} />}
       />
       <PreviewSection
         title="امتحانات پیشِ رو"
         subtitle="تقویم امتحانات نوبت دوم."
         href="/exams"
-        items={exams.slice(0, 3).map((e) => ({ id: e._id, title: e.title, meta: [e.date, e.time].filter(Boolean).join(" · "), desc: e.grade }))}
+        items={exams.slice(0, 3).map((e) => ({ id: e.id, title: e.title, meta: [e.date, e.time].filter(Boolean).join(" · "), desc: e.grade }))}
         renderItem={(i) => <QuietCard item={i} />}
       />
       <section className="container-page py-12 sm:py-14">

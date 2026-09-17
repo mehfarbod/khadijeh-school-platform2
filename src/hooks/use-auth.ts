@@ -1,23 +1,36 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { useAuthActions } from "@convex-dev/auth/react";
-import { useConvexAuth } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useEffect, useState } from "react";
+
+export type AuthUser = { id: string; email: string; name: string | null; role: string };
 
 export function useAuth() {
-  const { isLoading: isAuthLoading, isAuthenticated } = useConvexAuth();
-  const me = useQuery(api.account.me, {});
-  const { signIn, signOut } = useAuthActions();
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
-  const isLoading = isAuthLoading || me === undefined;
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelled) {
+          setUser(d.user ?? null);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  return {
-    isLoading,
-    isAuthenticated,
-    user: me?.user ?? null,
-    student: me?.student ?? null,
-    signIn,
-    signOut,
-  };
+  async function signOut() {
+    await fetch("/api/auth/sign-out", { method: "POST" });
+    setUser(null);
+    window.location.href = "/";
+  }
+
+  return { isLoading, isAuthenticated: !!user, user, signOut };
 }

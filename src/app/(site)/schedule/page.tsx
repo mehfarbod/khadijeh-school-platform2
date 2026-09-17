@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
-import { api } from "@/convex/_generated/api";
-import { getConvexServerClient } from "@/lib/server-convex";
+import { listSchedule, SCHEDULE_DAYS } from "@/lib/queries";
 import { PageHeader, EmptyState } from "@/components/site/primitives";
 
 export const metadata: Metadata = { title: "برنامه هفتگی" };
 export const dynamic = "force-dynamic";
 
-const DAYS = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنجشنبه"];
-
 export default async function SchedulePage() {
-  const rows = await getConvexServerClient().query(api.public2.listSchedule, {});
-  const byDay = DAYS.map((d) => ({ day: d, items: rows.filter((r) => r.day === d) })).filter((g) => g.items.length > 0);
+  const rows = await listSchedule();
+  const byDay = SCHEDULE_DAYS.map((d) => ({ day: d, items: rows.filter((r) => r.day === d) })).filter((g) => g.items.length > 0);
 
   return (
     <>
@@ -26,7 +23,7 @@ export default async function SchedulePage() {
                 <table className="w-full text-sm">
                   <tbody>
                     {g.items.map((it, i) => (
-                      <tr key={it._id} className={i % 2 ? "bg-muted/40" : ""}>
+                      <tr key={it.id} className={i % 2 ? "bg-muted/40" : ""}>
                         <td className="px-5 py-3 whitespace-nowrap text-muted-foreground">{it.time}</td>
                         <td className="px-2 py-3 font-medium">{it.subject}</td>
                         <td className="px-2 py-3 text-muted-foreground">{it.teacher}</td>

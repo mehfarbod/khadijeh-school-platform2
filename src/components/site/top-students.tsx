@@ -8,12 +8,12 @@ import { EmptyState } from "./primitives";
 import { excerpt } from "@/lib/format";
 
 type TopStudent = {
-  _id: string;
+  id: string;
   fullName: string;
   grade: string;
-  className?: string;
+  className?: string | null;
   achievement: string;
-  photoUrl?: string;
+  photoUrl?: string | null;
 };
 
 export function TopStudents({ students }: { students: TopStudent[] }) {
@@ -45,7 +45,7 @@ export function TopStudents({ students }: { students: TopStudent[] }) {
         <div ref={ref} className="overflow-hidden" role="region" aria-roledescription="carousel" aria-label="دانش‌آموزان برتر">
           <div className="-ml-4 flex">
             {students.map((s) => (
-              <div key={s._id} className="min-w-0 shrink-0 grow-0 basis-full pl-4 sm:basis-1/2 lg:basis-1/3">
+              <div key={s.id} className="min-w-0 shrink-0 grow-0 basis-full pl-4 sm:basis-1/2 lg:basis-1/3">
                 <article className="card-quiet flex h-full flex-col p-6">
                   <Award className="size-5 text-gold-deep" aria-hidden />
                   <h3 className="mt-4 font-bold">{s.fullName}</h3>

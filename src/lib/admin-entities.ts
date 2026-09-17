@@ -9,9 +9,16 @@ export type FieldConfig = {
   placeholder?: string;
 };
 
+/** Prisma delegate names (singular model keys on the Prisma client). */
+export type AdminModel =
+  | "student" | "staff" | "course" | "courseRegistration" | "news" | "report"
+  | "event" | "announcement" | "achievement" | "topStudent" | "birthday"
+  | "galleryAlbum" | "galleryImage" | "scheduleEntry" | "exam" | "faqItem"
+  | "contactMessage";
+
 export type EntityConfig = {
   slug: string;
-  table: string;
+  model: AdminModel;
   title: string;
   singular: string;
   fields: FieldConfig[];
@@ -31,7 +38,7 @@ const statusField = (name = "status"): FieldConfig => ({
 
 export const ENTITIES: EntityConfig[] = [
   {
-    slug: "students", table: "students", title: "دانش‌آموزان", singular: "دانش‌آموز",
+    slug: "students", model: "student", title: "دانش‌آموزان", singular: "دانش‌آموز",
     fields: [
       { name: "fullName", label: "نام و نام خانوادگی", type: "text", required: true },
       { name: "grade", label: "پایه", type: "text", required: true },
@@ -47,7 +54,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "staff", table: "staff", title: "معلمان و کادر", singular: "عضو کادر",
+    slug: "staff", model: "staff", title: "معلمان و کادر", singular: "عضو کادر",
     fields: [
       { name: "fullName", label: "نام", type: "text", required: true },
       { name: "role", label: "سمت", type: "text", required: true, placeholder: "معلم / معاون / مدیر" },
@@ -62,7 +69,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "courses", table: "courses", title: "دوره‌ها", singular: "دوره",
+    slug: "courses", model: "course", title: "دوره‌ها", singular: "دوره",
     fields: [
       { name: "title", label: "عنوان", type: "text", required: true },
       { name: "slug", label: "نامک (انگلیسی)", type: "text", required: true },
@@ -82,11 +89,12 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "course-registrations", table: "courseRegistrations", title: "ثبت‌نام دوره‌ها", singular: "ثبت‌نام",
+    slug: "course-registrations", model: "courseRegistration", title: "ثبت‌نام دوره‌ها", singular: "ثبت‌نام",
     fields: [
       { name: "fullName", label: "نام", type: "text", required: true },
       { name: "phone", label: "تلفن", type: "text", required: true },
       { name: "grade", label: "پایه", type: "text" },
+      { name: "courseId", label: "شناسه دوره", type: "text", placeholder: "شناسه دوره را از بخش دوره‌ها بردارید" },
       { name: "status", label: "وضعیت", type: "select", options: [
         { value: "pending", label: "در انتظار" },
         { value: "approved", label: "تأیید" },
@@ -106,7 +114,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "news", table: "news", title: "اخبار", singular: "خبر",
+    slug: "news", model: "news", title: "اخبار", singular: "خبر",
     fields: [
       { name: "title", label: "عنوان", type: "text", required: true },
       { name: "slug", label: "نامک (انگلیسی)", type: "text", required: true },
@@ -120,7 +128,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "reports", table: "reports", title: "گزارش‌ها", singular: "گزارش",
+    slug: "reports", model: "report", title: "گزارش‌ها", singular: "گزارش",
     fields: [
       { name: "title", label: "عنوان", type: "text", required: true },
       { name: "slug", label: "نامک (انگلیسی)", type: "text", required: true },
@@ -134,7 +142,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "events", table: "events", title: "رویدادها", singular: "رویداد",
+    slug: "events", model: "event", title: "رویدادها", singular: "رویداد",
     fields: [
       { name: "title", label: "عنوان", type: "text", required: true },
       { name: "description", label: "توضیحات", type: "textarea" },
@@ -150,7 +158,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "announcements", table: "announcements", title: "اطلاعیه‌ها", singular: "اطلاعیه",
+    slug: "announcements", model: "announcement", title: "اطلاعیه‌ها", singular: "اطلاعیه",
     fields: [
       { name: "title", label: "عنوان", type: "text", required: true },
       { name: "body", label: "متن", type: "textarea", required: true },
@@ -163,7 +171,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "achievements", table: "achievements", title: "افتخارات", singular: "افتخار",
+    slug: "achievements", model: "achievement", title: "افتخارات", singular: "افتخار",
     fields: [
       { name: "title", label: "عنوان", type: "text", required: true },
       { name: "level", label: "سطح", type: "select", options: [
@@ -181,7 +189,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "top-students", table: "topStudents", title: "دانش‌آموزان برتر", singular: "دانش‌آموز برتر",
+    slug: "top-students", model: "topStudent", title: "دانش‌آموزان برتر", singular: "دانش‌آموز برتر",
     fields: [
       { name: "fullName", label: "نام", type: "text", required: true },
       { name: "grade", label: "پایه", type: "text", required: true },
@@ -196,7 +204,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "birthdays", table: "birthdays", title: "تولدها", singular: "تولد",
+    slug: "birthdays", model: "birthday", title: "تولدها", singular: "تولد",
     fields: [
       { name: "person", label: "نام", type: "text", required: true },
       { name: "kind", label: "نوع", type: "select", options: [
@@ -214,7 +222,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "exams", table: "exams", title: "امتحانات", singular: "امتحان",
+    slug: "exams", model: "exam", title: "امتحانات", singular: "امتحان",
     fields: [
       { name: "title", label: "عنوان", type: "text", required: true },
       { name: "subject", label: "درس", type: "text", required: true },
@@ -231,7 +239,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "schedule", table: "scheduleEntries", title: "برنامه هفتگی", singular: "ساعت کلاسی",
+    slug: "schedule", model: "scheduleEntry", title: "برنامه هفتگی", singular: "ساعت کلاسی",
     fields: [
       { name: "day", label: "روز", type: "select", required: true, options: [
         { value: "شنبه", label: "شنبه" },
@@ -255,7 +263,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "gallery-albums", table: "galleryAlbums", title: "آلبوم‌های گالری", singular: "آلبوم",
+    slug: "gallery-albums", model: "galleryAlbum", title: "آلبوم‌های گالری", singular: "آلبوم",
     fields: [
       { name: "title", label: "عنوان", type: "text", required: true },
       { name: "description", label: "توضیحات", type: "textarea" },
@@ -264,7 +272,7 @@ export const ENTITIES: EntityConfig[] = [
     columns: [{ name: "title", label: "عنوان" }],
   },
   {
-    slug: "gallery-images", table: "galleryImages", title: "تصاویر گالری", singular: "تصویر",
+    slug: "gallery-images", model: "galleryImage", title: "تصاویر گالری", singular: "تصویر",
     fields: [
       { name: "albumId", label: "شناسه آلبوم", type: "text", required: true, placeholder: "شناسه آلبوم را از بخش آلبوم‌ها بردارید" },
       { name: "title", label: "عنوان تصویر", type: "text" },
@@ -276,7 +284,7 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
   {
-    slug: "faq", table: "faqItems", title: "پرسش‌های پرتکرار", singular: "پرسش",
+    slug: "faq", model: "faqItem", title: "پرسش‌های پرتکرار", singular: "پرسش",
     fields: [
       { name: "question", label: "پرسش", type: "text", required: true },
       { name: "answer", label: "پاسخ", type: "textarea", required: true },
@@ -285,7 +293,7 @@ export const ENTITIES: EntityConfig[] = [
     columns: [{ name: "question", label: "پرسش" }],
   },
   {
-    slug: "contact-messages", table: "contactMessages", title: "پیام‌های تماس", singular: "پیام",
+    slug: "contact-messages", model: "contactMessage", title: "پیام‌های تماس", singular: "پیام",
     fields: [
       { name: "subject", label: "موضوع", type: "text", required: true },
       { name: "message", label: "متن پیام", type: "textarea", required: true },
@@ -297,3 +305,5 @@ export const ENTITIES: EntityConfig[] = [
     ],
   },
 ];
+
+export const ENTITY_BY_SLUG = new Map(ENTITIES.map((e) => [e.slug, e]));

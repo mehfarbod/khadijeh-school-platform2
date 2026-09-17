@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { api } from "@/convex/_generated/api";
-import { getConvexServerClient } from "@/lib/server-convex";
+import { getSettings } from "@/lib/queries";
 import { PageHeader } from "@/components/site/primitives";
 import { ContactForm } from "@/components/site/contact-form";
 
@@ -8,7 +7,7 @@ export const metadata: Metadata = { title: "تماس با ما" };
 export const dynamic = "force-dynamic";
 
 export default async function ContactPage() {
-  const settings = await getConvexServerClient().query(api.public.getSettings, {});
+  const settings = await getSettings();
 
   return (
     <>

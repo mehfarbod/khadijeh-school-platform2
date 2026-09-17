@@ -8,7 +8,7 @@ export function faNum(n: number | undefined | null): string {
   return toFa(n ?? "");
 }
 
-export function excerpt(text: string | undefined, len = 110): string {
+export function excerpt(text: string | undefined | null, len = 110): string {
   if (!text) return "";
   const t = text.replace(/\s+/g, " ").trim();
   return t.length > len ? t.slice(0, len) + "…" : t;

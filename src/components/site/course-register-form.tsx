@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +15,6 @@ export function CourseRegisterForm({
   courseId: string;
   status?: string;
 }) {
-  const register = useMutation(api.portal.registerForCourse);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,13 +31,19 @@ export function CourseRegisterForm({
     setSaving(true);
     setError(null);
     try {
-      await register({
-        courseId: courseId as never,
-        fullName: String(fd.get("fullName") ?? ""),
-        phone: String(fd.get("phone") ?? ""),
-        grade: String(fd.get("grade") ?? "") || undefined,
-        note: String(fd.get("note") ?? "") || undefined,
+      const res = await fetch("/api/courses/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId,
+          fullName: String(fd.get("fullName") ?? ""),
+          phone: String(fd.get("phone") ?? ""),
+          grade: String(fd.get("grade") ?? ""),
+          note: String(fd.get("note") ?? ""),
+        }),
       });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "ثبت‌نام ناموفق بود.");
       toast.success("درخواست ثبت‌نام ثبت شد", { description: "بررسی و تأیید نهایی توسط مدرسه انجام می‌شود." });
     } catch (err) {
       setError(err instanceof Error ? err.message : "ثبت‌نام ناموفق بود.");

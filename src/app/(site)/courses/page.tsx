@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { api } from "@/convex/_generated/api";
-import { getConvexServerClient } from "@/lib/server-convex";
+import { listCourses } from "@/lib/queries";
 import { PageHeader, EmptyState } from "@/components/site/primitives";
 import { excerpt, toFa } from "@/lib/format";
 
@@ -16,7 +15,7 @@ const STATUS_FA: Record<string, string> = {
 };
 
 export default async function CoursesPage() {
-  const courses = await getConvexServerClient().query(api.public2.listCourses, {});
+  const courses = await listCourses();
 
   return (
     <>
@@ -30,7 +29,7 @@ export default async function CoursesPage() {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {courses.map((c) => (
-              <Link key={c._id} href={`/courses/${c.slug}`} className="card-quiet group overflow-hidden">
+              <Link key={c.id} href={`/courses/${c.slug}`} className="card-quiet group overflow-hidden">
                 {c.imageUrl ? (
                   <div className="relative aspect-[16/9]">
                     <Image src={c.imageUrl} alt={c.title} fill className="object-cover" sizes="(max-width: 640px) 100vw, 33vw" />
@@ -39,7 +38,7 @@ export default async function CoursesPage() {
                 <div className="p-5">
                   <div className="flex items-center justify-between gap-2">
                     <span className="rounded-full bg-rose-tint px-2.5 py-0.5 text-xs font-medium text-rose-deep">{c.category}</span>
-                    <span className="text-xs text-muted-foreground">{STATUS_FA[c.status ?? ""] ?? "—"}</span>
+                    <span className="text-xs text-muted-foreground">{STATUS_FA[c.status] ?? "—"}</span>
                   </div>
                   <h2 className="mt-3 font-bold leading-7 group-hover:text-ink-soft">{c.title}</h2>
                   <p className="mt-2 text-sm leading-6 text-muted-foreground">{excerpt(c.description)}</p>

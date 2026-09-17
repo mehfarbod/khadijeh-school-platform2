@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { api } from "@/convex/_generated/api";
-import { getConvexServerClient } from "@/lib/server-convex";
+import { getCourseBySlug } from "@/lib/queries";
 import { CourseRegisterForm } from "@/components/site/course-register-form";
 import { toFa } from "@/lib/format";
 
@@ -11,13 +10,13 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const course = await getConvexServerClient().query(api.public2.getCourseBySlug, { slug });
+  const course = await getCourseBySlug(slug);
   return { title: course?.title ?? "دوره" };
 }
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const course = await getConvexServerClient().query(api.public2.getCourseBySlug, { slug });
+  const course = await getCourseBySlug(slug);
   if (!course) notFound();
 
   return (
@@ -44,7 +43,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
           </dl>
         </div>
         <aside>
-          <CourseRegisterForm courseId={course._id} status={course.status} />
+          <CourseRegisterForm courseId={course.id} status={course.status} />
         </aside>
       </div>
     </div>

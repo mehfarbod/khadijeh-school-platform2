@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +11,6 @@ import { toast } from "sonner";
 const EMPTY = { name: "", phone: "", email: "", subject: "", message: "" };
 
 export function ContactForm() {
-  const submit = useMutation(api.public2.submitContact);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +23,13 @@ export function ContactForm() {
     setSaving(true);
     setError(null);
     try {
-      await submit({ ...form });
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "ارسال پیام ناموفق بود.");
       toast.success("پیام شما ثبت شد", { description: "به‌زودی با شما تماس می‌گیریم." });
       setForm(EMPTY);
     } catch (err) {

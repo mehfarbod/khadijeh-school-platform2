@@ -4,13 +4,13 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 
-type Faq = { _id: string; question: string; answer: string };
+type Faq = { id: string; question: string; answer: string };
 
 export function FaqList({ items }: { items: Faq[] }) {
   return (
     <Accordion type="single" collapsible className="w-full">
       {items.map((f) => (
-        <AccordionItem key={f._id} value={f._id}>
+        <AccordionItem key={f.id} value={f.id}>
           <AccordionTrigger className="text-right text-[15px] font-medium leading-7 hover:no-underline">
             {f.question}
           </AccordionTrigger>

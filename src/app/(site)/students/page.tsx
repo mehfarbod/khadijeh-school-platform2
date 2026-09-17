@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { api } from "@/convex/_generated/api";
-import { getConvexServerClient } from "@/lib/server-convex";
+import { listTopStudents } from "@/lib/queries";
 import { PageHeader, EmptyState } from "@/components/site/primitives";
 import { toFa } from "@/lib/format";
 
@@ -8,7 +7,7 @@ export const metadata: Metadata = { title: "دانش‌آموزان" };
 export const dynamic = "force-dynamic";
 
 export default async function StudentsPage() {
-  const tops = await getConvexServerClient().query(api.public.listTopStudents, { limit: 50 });
+  const tops = await listTopStudents(50);
 
   return (
     <>
@@ -22,7 +21,7 @@ export default async function StudentsPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {tops.map((s, i) => (
-              <article key={s._id} className="card-quiet p-6">
+              <article key={s.id} className="card-quiet p-6">
                 <div className="flex items-center justify-between">
                   <span className="flex size-8 items-center justify-center rounded-full bg-cream text-sm font-bold text-ink-soft">
                     {toFa(i + 1)}

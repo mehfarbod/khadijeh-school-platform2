@@ -1,8 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
 import type { EntityConfig, FieldConfig } from "@/lib/admin-entities";
 import { Button } from "@/components/ui/button";
@@ -19,24 +17,32 @@ import {
 import { EmptyState, Spinner } from "@/components/site/primitives";
 import { toast } from "sonner";
 
-type Row = Record<string, unknown> & { _id: string };
-
-function asRow(v: unknown): Row | null {
-  if (typeof v !== "object" || v === null) return null;
-  return v as Row;
-}
+type Row = Record<string, unknown> & { id: string };
 
 export function EntityCRUD({ entity }: { entity: EntityConfig }) {
-  const rawRows = useQuery(api.admin.adminList, { table: entity.table as never });
-  const rows: Row[] | undefined = rawRows === undefined ? undefined : (rawRows as unknown[]).map(asRow).filter((r): r is Row => r !== null);
-  const create = useMutation(api.admin.adminCreate);
-  const update = useMutation(api.admin.adminUpdate);
-  const remove = useMutation(api.admin.adminDelete);
-
+  const [rows, setRows] = useState<Row[] | undefined>(undefined);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Row | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<Row | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const refresh = useCallback(async () => {
+    setRows(undefined);
+    try {
+      const res = await fetch(`/api/admin/${entity.model}`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "خطا در دریافت اطلاعات");
+      setRows((json.rows as Row[]) ?? []);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "خطا در دریافت اطلاعات");
+      setRows([]);
+    }
+  }, [entity.model]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh, reloadKey]);
 
   const filtered = useMemo(() => {
     if (!rows) return [];
@@ -47,11 +53,18 @@ export function EntityCRUD({ entity }: { entity: EntityConfig }) {
     );
   }, [rows, search, entity.columns]);
 
+  function onChanged() {
+    setReloadKey((k) => k + 1);
+  }
+
   async function onDelete() {
     if (!deleting) return;
     try {
-      await remove({ table: entity.table as never, id: deleting._id as never });
+      const res = await fetch(`/api/admin/${entity.model}/${deleting.id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "حذف ناموفق بود");
       toast.success("حذف شد");
+      onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "حذف ناموفق بود");
     } finally {
@@ -100,13 +113,13 @@ export function EntityCRUD({ entity }: { entity: EntityConfig }) {
               </TableHeader>
               <TableBody>
                 {filtered.map((row) => (
-                  <TableRow key={row._id}>
+                  <TableRow key={row.id}>
                     {entity.columns.map((c) => (
                       <TableCell key={c.name} className="max-w-64 truncate">{formatCell(row[c.name])}</TableCell>
                     ))}
                     <TableCell className="text-left">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => setEditing(row)} aria-label={`ویرایش`}>
+                        <Button variant="ghost" size="icon" onClick={() => setEditing(row)} aria-label="ویرایش">
                           <Pencil className="size-4" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => setDeleting(row)} aria-label="حذف" className="text-destructive">
@@ -127,8 +140,7 @@ export function EntityCRUD({ entity }: { entity: EntityConfig }) {
         row={editing}
         open={open}
         onClose={() => { setCreating(false); setEditing(null); }}
-        create={create}
-        update={update}
+        onSaved={onChanged}
       />
 
       <Dialog open={deleting !== null} onOpenChange={(v) => !v && setDeleting(null)}>
@@ -154,21 +166,20 @@ function formatCell(v: unknown): string {
 }
 
 function EntityFormDialog({
-  entity, row, open, onClose, create, update,
+  entity, row, open, onClose, onSaved,
 }: {
   entity: EntityConfig;
   row: Row | null;
   open: boolean;
   onClose: () => void;
-  create: ReturnType<typeof useMutation<typeof api.admin.adminCreate>>;
-  update: ReturnType<typeof useMutation<typeof api.admin.adminUpdate>>;
+  onSaved: () => void;
 }) {
   const [values, setValues] = useState<Record<string, string | boolean>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
 
-  const key = row ? row._id : open ? "new" : null;
+  const key = row ? row.id : open ? "new" : null;
   if (key !== loadedFor) {
     const next: Record<string, string | boolean> = {};
     for (const f of entity.fields) {
@@ -196,13 +207,16 @@ function EntityFormDialog({
       else data[f.name] = String(raw ?? "").trim();
     }
     try {
-      if (row) {
-        await update({ table: entity.table as never, id: row._id as never, data });
-        toast.success("ذخیره شد");
-      } else {
-        await create({ table: entity.table as never, data });
-        toast.success("افزوده شد");
-      }
+      const url = row ? `/api/admin/${entity.model}/${row.id}` : `/api/admin/${entity.model}`;
+      const res = await fetch(url, {
+        method: row ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "ذخیره ناموفق بود");
+      toast.success(row ? "ذخیره شد" : "افزوده شد");
+      onSaved();
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "ذخیره ناموفق بود");

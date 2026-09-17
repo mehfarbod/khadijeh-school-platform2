@@ -2,20 +2,19 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { api } from "@/convex/_generated/api";
-import { getConvexServerClient } from "@/lib/server-convex";
+import { getReportBySlug } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const item = await getConvexServerClient().query(api.public.getReportBySlug, { slug });
+  const item = await getReportBySlug(slug);
   return { title: item?.title ?? "گزارش" };
 }
 
 export default async function ReportDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const item = await getConvexServerClient().query(api.public.getReportBySlug, { slug });
+  const item = await getReportBySlug(slug);
   if (!item) notFound();
 
   return (

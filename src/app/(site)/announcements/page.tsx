@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { Megaphone } from "lucide-react";
-import { api } from "@/convex/_generated/api";
-import { getConvexServerClient } from "@/lib/server-convex";
+import { listAnnouncements } from "@/lib/queries";
 import { PageHeader, EmptyState } from "@/components/site/primitives";
 
 export const metadata: Metadata = { title: "اطلاعیه‌ها" };
 export const dynamic = "force-dynamic";
 
 export default async function AnnouncementsPage() {
-  const items = await getConvexServerClient().query(api.public.listAnnouncements, { limit: 50 });
+  const items = await listAnnouncements(50);
 
   return (
     <>
@@ -19,7 +18,7 @@ export default async function AnnouncementsPage() {
         ) : (
           <div className="space-y-4">
             {items.map((a) => (
-              <article key={a._id} className="card-quiet flex gap-4 p-6">
+              <article key={a.id} className="card-quiet flex gap-4 p-6">
                 <Megaphone className={`mt-1 size-5 shrink-0 ${a.important ? "text-rose-deep" : "text-muted-foreground"}`} aria-hidden />
                 <div>
                   <div className="flex flex-wrap items-baseline gap-x-3">

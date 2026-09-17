@@ -4,8 +4,8 @@ import { EmptyState } from "./primitives";
 export type PreviewItem = {
   id: string;
   title: string;
-  meta?: string;
-  desc?: string;
+  meta?: string | null;
+  desc?: string | null;
   href?: string;
 };
 
